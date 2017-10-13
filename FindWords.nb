@@ -1,0 +1,49 @@
+collection = {};
+processingset = "";
+combinity[corpus_, a_, b_] := Block[
+  {f1, f2, fw, L},
+  L = StringLength@corpus;
+  f1 = StringCount[corpus, a]/L;
+  f2 = StringCount[corpus, b]/L;
+  fw = StringCount[corpus, a <> b]/L;
+  fw/(f1 f2 )
+  ]
+cbt[corpus_, s_] := Block[
+  {splits},
+  splits = {StringTake[s, #], StringTake[s, {# + 1, -1}]} & /@ 
+    Range[StringLength@s - 1];
+  Apply[(combinity[corpus, #1, #2] &), #] & /@ splits // Min
+  ]
+leftEntropy[corpus_, w_] := N@Entropy@StringCases[corpus, x_ ~~ w :> x]
+rightEntropy[corpus_, w_] := 
+ N@Entropy@StringCases[corpus, w ~~ x_ :> x]
+findWords[corpusA_, corpus_, begin_, maxLength_: 5, combThreshold_: 5,
+   entThreshold_: 1.8] := Module[
+  {candidates, outputs},
+  candidates = 
+   StringCases[corpus, 
+     begin ~~ 
+      Except[Characters[
+        "、，。？！ !?.,＆\"'\[Ellipsis]：:\[CloseCurlyQuote]"]]] // Union;
+  processingset = candidates;
+  candidates = 
+   Select[candidates, leftEntropy[corpusA, #] > entThreshold &];
+  candidates = Select[candidates, StringLength[#] <= maxLength &];
+  candidates = Select[candidates, cbt[corpusA, #] > combThreshold &];
+  outputs = 
+   Select[candidates, rightEntropy[corpusA, #] > entThreshold &];
+  collection = Union[collection, outputs];
+  candidates = Complement[candidates, outputs];
+  If[Length[candidates] > 0,
+   findWords[corpusA, corpus, #, maxLength, combThreshold, 
+       entThreshold] & /@ candidates;];
+  ]
+isWord[corpus_, w_, combThreshold_: 5, entThreshold_: 1.8] := 
+ leftEntropy[corpus, w] > entThreshold && 
+  rightEntropy[corpus, w] > entThreshold && 
+  cbt[corpus, w] > combThreshold
+getNgrams[text_, n_] := 
+ Select[Keys@
+   CharacterCounts[text, n], ! 
+    StringContainsQ[#, 
+     Characters@"、，。？！ !?.,＆\"'\[Ellipsis]：:\[CloseCurlyQuote]\n"] &]
