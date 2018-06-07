@@ -1,0 +1,19 @@
+(*
+将 NETLink 返回的 bitmap 对象显示为图片，具体做法是先将 NETLinkObject 转换成二进制数组，然后在 Mathematica 生成图片。
+需要用到 NETLink
+*)
+
+bitmapToImage[bitmap_]:=Module[
+{width,height,lock,stride,data,size},
+NETLink`LoadNETType/@{"System.Drawing.Rectangle","System.Drawing.Imaging.ImageLockMode","System.Runtime.InteropServices.Marshal"};
+width=bitmap[Width];
+height=bitmap[Height];
+lock=bitmap[LockBits[Rectangle`FromLTRB[0,0,width,height],ImageLockMode`ReadWrite,bitmap[PixelFormat][Format32bppArgb]]];
+stride=Abs[lock@Stride];
+size=stride height;
+data=NETLink`NETNew["System.Byte[]",size];
+Marshal`Copy[lock@Scan0,data,0,size];
+data=NETLink`NETObjectToExpression[data];
+bitmap@UnlockBits@lock;
+Image[Partition[{##[[3]],##[[2]],##[[1]],##[[4]]}&/@Partition[data,4],height],"Byte",ColorSpace->"RGB"]
+]
