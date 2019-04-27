@@ -1,0 +1,72 @@
+originalText = 
+  Import["D:\\MMALab\\texts\\全唐诗.txt", CharacterEncoding -> "UTF8"];
+
+poems = StringCases[
+   originalText,
+   "卷" ~~ fold : NumberString ~~ "_" ~~ order : NumberString ~~ " 【" ~~
+      Shortest[title__] ~~ "】" ~~ Shortest[poet___] ~~ " \n\n" ~~ 
+     Shortest[poem__] ~~ "\n" .. ~~ " " .. :> <|"title" -> title, 
+     "poet" -> poet, 
+     "poem" -> StringSplit[StringDelete[poem, "\n"], {"，", "。"}], 
+     "fold" -> fold, "order" -> order|>
+   ];
+
+getPairs[poem_] := 
+ Flatten[MapThread[List, Characters[#]] & /@ 
+   Partition[poem[["poem"]], 2], 1]
+
+allPairs = Select[Flatten[getPairs /@ poems, 1], Head[#] == List &];
+
+getUpperPair[ch_] := Cases[allPairs, {p_, ch} :> p]
+getLowerPair[ch_] := Cases[allPairs, {ch, p_} :> p]
+getNext[ch_] := 
+ Flatten[StringCases[#, ch ~~ next_ :> next] & /@ 
+   Flatten[poems[[All, "poem"]]]]
+
+randomSelect[list_, times_] := Block[
+  {randomset},
+  randomset = (Counts[list]/10)^2;
+  First@Commonest@
+    RandomChoice[Values[randomset] -> Keys[randomset], times]
+  ]
+
+nextPairedSelect[list1_, list2_, times_] := Block[
+  {randomset},
+  randomset = 
+   Merge[{Counts[list1], Counts[list2]}, 
+    If[Length[#] < 2, 0, Times @@ #] &];
+  First@Commonest@
+    RandomChoice[Values[randomset] -> Keys[randomset], times]
+  ]
+
+verseGen[begin_, length_, r_: 30, twogram_: False] := Block[
+  {ask = begin, resp, asking, askingset, pairingset, responding, 
+   respondingset, round = 0, showing},
+  resp = randomSelect[getLowerPair[begin], 10];
+  While[StringLength[ask] < length,
+   asking = 
+    StringTake[ask, If[twogram && StringLength[ask] >= 2, -2, -1]];
+   askingset = getNext[asking];
+   If[StringLength[ask] >= 2, 
+    askingset = DeleteCases[askingset, StringTake[ask, {-2}]]];
+   pairingset = getLowerPair[asking];
+   asking = randomSelect[askingset, r];
+   responding = StringTake[resp, -1];
+   respondingset = getNext[responding];
+   responding = nextPairedSelect[pairingset, respondingset, r];
+   
+   ask = ask <> asking;
+   resp = resp <> responding;
+   showing = ask <> "," <> resp;
+   ];
+  {ask, resp}
+  ]
+  
+(*
+先运行所有代码，然后使用 verseGen 函数生成一联诗;
+参数说明: verseGen[begin, length, randomity, 2gram];
+begin: 首字;
+length: 长度（五言七言等）;
+randomity: 随机度（默认30）;
+2gram: 使用 2gram 模型（大概率失败）;
+*)
