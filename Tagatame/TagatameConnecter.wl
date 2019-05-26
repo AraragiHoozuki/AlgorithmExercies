@@ -211,7 +211,7 @@ MasterDigest=resp[["body","environments","alchemist","master_digest"]];
 resp
 ]
 
-GetAccessToken[deviceid_:"a7b429b5-88a0-4a5b-9082-495f526dc8a0", secretkey_:"ef9ac5ff-0818-46e0-9837-e1b20fd47b5a"]:=Block[
+GetAccessToken[deviceid_, secretkey_]:=Block[
 {req, json,body,path="/gauth/accesstoken",guid,resp},
 guid=StringDelete[CreateUUID[],"-"];
 json=<|"ticket"->0,"access_token"->"",  "param"-><|"device_id"->deviceid,"secret_key"->secretkey|>|>;
