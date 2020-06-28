@@ -1,0 +1,55 @@
+sample = RandomInteger[1000, 1000];
+
+selectionSort[list_] := Block[
+  {arr = list, l = Length[list], minIndex, min},
+  Table[
+   {minIndex, min} = {r, arr[[r]]};
+   Table[If[arr[[i]] < min, {minIndex, min} = {i, arr[[i]]}], {i, r, 
+     l}];
+   If[minIndex != r, arr[[{r, minIndex}]] = arr[[{minIndex, r}]]];,
+   {r, 1, l - 1}];
+  arr
+  ]
+
+insertionSort[list_] := Block[
+  {arr = list, l = Length@list},
+  Table[
+   Table[If[arr[[j - 1]] > arr[[j]], 
+     arr[[{j - 1, j}]] = arr[[{j, j - 1}]]], {j, i, 1, -1}]
+   , {i, 1, l}];
+  arr
+  ]
+
+shellSort[list_] := Block[
+  {arr = list, l = Length@list},
+  Table[
+   Table[
+    Table[
+     If[arr[[j - h]] > arr[[j]], 
+      arr[[{j - h, j}]] = arr[[{j, j - h}]]], {j, i, 1, -h}]
+    , {i, 1, l, h}]
+   , {h, {500, 50, 1}}];
+  arr
+  ]
+
+mergeMethod[l1_List, l2_List] := Block[
+  {l = {}, a = l1, b = l2},
+  Table[
+   If[Length[b] == 0 || (Length[a] > 0 && First[a] < First[b]),
+    l = Append[l, First[a]]; a = Rest[a],
+    l = Append[l, First[b]]; b = Rest[b]
+    ]
+   , {i, 1, Length@a + Length@b}];
+  l
+  ]
+mergeMethod[l_List] := l
+divideAndMerge[l3_] := Block[{l3c = l3},
+  l3c = Partition[l3, UpTo[2]];
+  l3c = (mergeMethod @@ #) & /@ l3c;
+  l3c
+  ]
+mergeSort[list_] := Block[
+  {arr = list},
+  arr = List /@ arr;
+  Flatten@FixedPoint[divideAndMerge, arr]
+  ]
