@@ -1,0 +1,65 @@
+(*Draw skill tree and generate adjacency matrix*)
+
+DynamicModule[
+ {arrows = {}, arrow = {}, BeginMove, OnMoving, EndMove, FromPolar, 
+  CalcIndex, temp, vl = Range[24*8 + 1](*vertex list*), 
+  am = Table[0, {i, 1, 24*8 + 1}, {j, 1, 24*8 + 1}](*adjacency matrix*),
+   nodes = {}, node},
+ FromPolar[coord_] := 
+  If[coord[[1]] == 0, {0, 0}, 
+   If[coord[[2]] == -Pi, {-coord[[1]], 0}, 
+    FromPolarCoordinates[coord]]];
+ CalcIndex[co_] := 
+  Total[Round[
+      If[#[[2]] < 0, {#[[1]], #[[2]] + 2 Pi}, #] &[
+        If[# == {0, 0}, {0, 0}, ToPolarCoordinates@#] &[co]]*{1/12, 
+        12/Pi}]*{1, 8}] + 1;
+ BeginMove[] := (arrow = 
+    Arrow[{FromPolar[
+       Round[ToPolarCoordinates@MousePosition["Graphics"]*{1/12, 
+           12/Pi}]*{12, Pi/12}], {0, 0}}]);
+ OnMoving[] := (arrow[[1, 2]] = 
+    FromPolar[
+     Round[ToPolarCoordinates@MousePosition["Graphics"]*{1/12, 
+         12/Pi}]*{12, Pi/12}]);
+ EndMove[] := (
+   If[arrow[[1, 1]] != arrow[[1, 2]],
+    am[[CalcIndex@arrow[[1, 1]], CalcIndex@arrow[[1, 2]]]] = 1;
+    AppendTo[arrows, arrow]; arrow = {};,
+    vl[[CalcIndex@arrow[[1, 1]]]] = node;
+    AppendTo[nodes, 
+     Tooltip[Disk[arrow[[1, 1]], 2], Style[node, "Title"]]];
+    ]
+   );
+ Row[{
+   Column[{
+     PopupMenu[Dynamic@node, 
+      Keys@Import["D:\\RMGames\\Akademia\\data\\SkillTreeNodes.json", 
+        "RawJSON"]],
+     Button["Save Adjacency Matrix to $am", $am = am;],
+     Button["Preview Graph", 
+      MessageDialog[
+       AdjacencyGraph[am, DirectedEdges -> True, 
+        GraphLayout -> "CircularMultipartiteEmbedding", 
+        VertexLabels -> Table[i -> vl[[i]], {i, 1, 193}]]]],
+     Button["Print Result", 
+      Print@ExportString[vl, "RawJSON", "Compact" -> True]; 
+      Print@ExportString[am, "RawJSON", "Compact" -> True];]
+     }],
+   EventHandler[
+    Graphics[{Directive[Cyan], EdgeForm[Directive[Thick, Black]],
+      Table[
+       Disk[d*{Cos[\[Theta]], Sin[\[Theta]]}, 2], {d, 0, 12*8, 
+        12}, {\[Theta], 0, 2 Pi, 1/12 Pi}]
+      , Directive[Blue], EdgeForm[Directive[Thick, LightBlue]], 
+      Dynamic@nodes, Arrowheads[0.02], Directive[Red, Thick], 
+      Dynamic@arrows, Directive[Blue], Dynamic@arrow}, 
+     ImageSize -> 800]
+    ,
+    {"MouseDown" :> (BeginMove[]; OnMoving[]),
+     "MouseDragged" :> (OnMoving[]),
+     "MouseUp" :> (EndMove[])
+     }
+    ]
+   }]
+ ]
