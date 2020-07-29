@@ -1,10 +1,30 @@
-(*Draw skill tree and generate adjacency matrix*)
-
 DynamicModule[
- {arrows = {}, arrow = {}, BeginMove, OnMoving, EndMove, FromPolar, 
-  CalcIndex, temp, vl = Range[24*8 + 1](*vertex list*), 
+ {arrows = {}, arrow = {}, BeginMove, OnMoving, EndMove, LoadData, 
+  FromPolar, FromIndex, CalcIndex, temp, 
+  vl = Range[24*8 + 1](*vertex list*), 
   am = Table[0, {i, 1, 24*8 + 1}, {j, 1, 24*8 + 1}](*adjacency matrix*),
-   nodes = {}, node},
+   nodes = {}, node, gala = "GALA_NERO"},
+ LoadData[] := (
+   temp = 
+    Import["D:\\RMGames\\Akademia\\data\\SkillTrees.json", "RawJSON"];
+   vl = temp[gala]["vertex"];
+   am = temp[gala]["matrix"];
+   arrows = {}; nodes = {};
+   Table[If[StringQ[vl[[i]]], 
+     AppendTo[nodes, 
+      Tooltip[Disk[FromIndex[i], 2], 
+       Style[ToString[i] <> ": " <> vl[[i]], "Title"]]]], {i, 1, 
+     Length@vl}];
+   temp = Position[am, 1];
+   AppendTo[arrows, Arrow[{FromIndex[#[[1]]], FromIndex[#[[2]]]}]] & /@
+     temp;
+   );
+ FromIndex[
+   index_] := #[[1]] {Cos[#[[2]]], Sin[#[[2]]]} &@(If[
+      Mod[index - 1, 8] == 0, {8, 
+       Quotient[index - 1, 8] - 1}, {Mod[index - 1, 8], 
+       Quotient[index - 1, 8]}]*{12, Pi/12});
+ FromIndex[1] = {0, 0};
  FromPolar[coord_] := 
   If[coord[[1]] == 0, {0, 0}, 
    If[coord[[2]] == -Pi, {-coord[[1]], 0}, 
@@ -27,8 +47,11 @@ DynamicModule[
     am[[CalcIndex@arrow[[1, 1]], CalcIndex@arrow[[1, 2]]]] = 1;
     AppendTo[arrows, arrow]; arrow = {};,
     vl[[CalcIndex@arrow[[1, 1]]]] = node;
-    AppendTo[nodes, 
-     Tooltip[Disk[arrow[[1, 1]], 2], Style[node, "Title"]]];
+    If[StringQ[node] && node != "$schema", 
+     AppendTo[nodes, 
+       Tooltip[Disk[arrow[[1, 1]], 2], 
+        Style[ToString@CalcIndex@arrow[[1, 1]] <> ": " <> node, 
+         "Title"]]];];
     ]
    );
  Row[{
@@ -44,7 +67,13 @@ DynamicModule[
         VertexLabels -> Table[i -> vl[[i]], {i, 1, 193}]]]],
      Button["Print Result", 
       Print@ExportString[vl, "RawJSON", "Compact" -> True]; 
-      Print@ExportString[am, "RawJSON", "Compact" -> True];]
+      Print@ExportString[am, "RawJSON", "Compact" -> True];],
+     Button["Undo Arrow", 
+      If[Length@arrows > 0, temp = Last@arrows; 
+       am[[CalcIndex@temp[[1, 1]], CalcIndex@temp[[1, 2]]]] = 0; 
+       arrows = Drop[arrows, -1]]],
+     InputField[Dynamic[gala], String],
+     Button["Read Tree", LoadData[];]
      }],
    EventHandler[
     Graphics[{Directive[Cyan], EdgeForm[Directive[Thick, Black]],
