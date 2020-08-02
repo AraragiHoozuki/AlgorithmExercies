@@ -1,12 +1,12 @@
 DynamicModule[
- {arrows = {}, arrow = {}, BeginMove, OnMoving, EndMove, LoadData, 
+ {$jsonPath = "D:\\RMGames\\Akademia\\data\\SkillTrees.json", 
+  arrows = {}, arrow = {}, BeginMove, OnMoving, EndMove, LoadData, 
   FromPolar, FromIndex, CalcIndex, temp, 
   vl = Range[24*8 + 1](*vertex list*), 
   am = Table[0, {i, 1, 24*8 + 1}, {j, 1, 24*8 + 1}](*adjacency matrix*),
    nodes = {}, node, gala = "GALA_NERO"},
  LoadData[] := (
-   temp = 
-    Import["D:\\RMGames\\Akademia\\data\\SkillTrees.json", "RawJSON"];
+   temp = Import[$jsonPath, "RawJSON"];
    vl = temp[gala]["vertex"];
    am = temp[gala]["matrix"];
    arrows = {}; nodes = {};
@@ -56,6 +56,7 @@ DynamicModule[
    );
  Row[{
    Column[{
+     Style[Row@{"Node number: ", Dynamic@Length[arrows]}, "Title"],
      PopupMenu[Dynamic@node, 
       Keys@Import["D:\\RMGames\\Akademia\\data\\SkillTreeNodes.json", 
         "RawJSON"]],
@@ -65,9 +66,9 @@ DynamicModule[
        AdjacencyGraph[am, DirectedEdges -> True, 
         GraphLayout -> "CircularMultipartiteEmbedding", 
         VertexLabels -> Table[i -> vl[[i]], {i, 1, 193}]]]],
-     Button["Print Result", 
-      Print@ExportString[vl, "RawJSON", "Compact" -> True]; 
-      Print@ExportString[am, "RawJSON", "Compact" -> True];],
+     Button["Save Result", temp = Import[$jsonPath, "RawJSON"]; 
+      AssociateTo[temp, gala -> <|"vertex" -> vl, "matrix" -> am|>]; 
+      Export[$jsonPath, temp, "Compact" -> True];],
      Button["Undo Arrow", 
       If[Length@arrows > 0, temp = Last@arrows; 
        am[[CalcIndex@temp[[1, 1]], CalcIndex@temp[[1, 2]]]] = 0; 
