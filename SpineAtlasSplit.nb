@@ -1,0 +1,46 @@
+atlasParse[string_] := Module[
+  {lines = StringSplit[string, "\n"], atlas = <||>, curr, name},
+  curr = 6;
+  While[
+   curr <= Length@lines,
+   atlas[lines[[curr]]] = <||>;
+   atlas[lines[[curr]]]["rotate"] = 
+    First@StringCases[lines[[curr + 1]], 
+      "rotate: " ~~ rotate__ :> rotate];
+   atlas[lines[[curr]]]["xy"] = 
+    First@StringCases[lines[[curr + 2]], 
+      "xy: " ~~ x__ ~~ ", " ~~ y__ :> {ToExpression[x], 
+        ToExpression[y]}];
+   atlas[lines[[curr]]]["size"] = 
+    First@StringCases[lines[[curr + 3]], 
+      "size: " ~~ x__ ~~ ", " ~~ y__ :> {ToExpression[x], 
+        ToExpression[y]}];
+   curr = curr + 7;
+   ];
+  atlas
+  ]
+
+importAtlas[path_] := Module[
+  {img, atlas, data, list},
+  img = Import[path];
+  atlas = 
+   Import[DirectoryName[path] <> FileBaseName[path] <> ".atlas", 
+    "Text"];
+  data = atlasParse[atlas];
+  list = Table[
+    {Keys[data][[i]], 
+     If[data[[i, "rotate"]] == "true", 
+        ImageRotate[#, -90 Degree], #] &@
+      ImageTake[
+       img, {data[[i, "xy", 2]], 
+        data[[i, "xy", 2]] + 
+         data[[i, "size", 
+          If[data[[i, "rotate"]] == "true", 1, 2]]]}, {data[[i, "xy", 
+         1]], data[[i, "xy", 1]] + 
+         data[[i, "size", 
+          If[data[[i, "rotate"]] == "true", 2, 1]]]}]}, {i, 1, 
+     Length[data]}
+    ]
+  ]
+  
+  (*atlas and png must have the same name!*)
