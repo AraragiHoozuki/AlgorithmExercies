@@ -1,0 +1,175 @@
+中国纪检监察报文章爬取[date_] := Module[
+  {baseurl = "www.jjjcb.cn/content/", text, pages, titles},
+  text = URLRead[baseurl <> date <> "node_2.htm", "Body", 
+    CharacterEncoding -> "UTF8"];
+  pages = 
+   StringCases[text, 
+    "<a id=pageLink href=" ~~ {"./", ""} ~~ Shortest[addr__] ~~ ">" ~~
+       Shortest[name__] ~~ "</a>" :> {addr, name}];
+  pages = <|"url" -> baseurl <> date <> #[[1]], "name" -> #[[2]]|> & /@
+     pages;
+  titles = 
+   StringCases[URLRead[#url, "Body", CharacterEncoding -> "UTF8"], 
+      "<a href=content_" ~~ id : DigitCharacter .. ~~ ".htm" ~~ 
+        "><div id=mp" ~~ DigitCharacter .. ~~ ">" ~~ 
+        Shortest[title__] ~~ "</div></a>" :> {id, title}] & /@ pages;
+  titles = DeleteDuplicates[Flatten[titles, 1]];
+  titles = <|"title" -> #[[2]], 
+      "url" -> baseurl <> date <> "content_" <> #[[1]] <> ".htm"|> & /@
+     titles;
+  titles = SortBy[titles, #url &];
+  Button[If[StringContainsQ[#title, "汉寿"], 
+      Style[#title, Red, Bold], #title], CreateDialog[
+      text = URLRead[#url, "Body", CharacterEncoding -> "UTF8"];
+      Pane[
+       StringReplace[
+        First@StringCases[text, 
+          "<founder-content>" ~~ Shortest[content__] ~~ 
+            "</founder-content>" :> content], {"&nbsp;" -> 
+          " ", {"<p>", "<P>"} -> "    ", {"</p>", "</P>"} -> "\n", 
+         "汉寿" -> ToString[Style["汉寿", Bold, Red], 
+           FormatType -> StandardForm]}], ImageSize -> {600, 500}, 
+       Scrollbars -> {False, True}]]
+     ] & /@ titles
+  ]
+
+湖南日报文章爬取[date_] := Module[
+  {baseurl = "https://hnrb.voc.com.cn/hnrb_epaper/html/", text, pages,
+    titles},
+  text = URLRead[baseurl <> date <> "node_201.htm", "Body", 
+    CharacterEncoding -> "UTF8"];
+  pages = 
+   StringCases[text, 
+    "<a id=pageLink href=" ~~ {"./", ""} ~~ Shortest[addr__] ~~ ">" ~~
+       Shortest[name__] ~~ "</a>" :> {addr, name}];
+  pages = <|"url" -> baseurl <> date <> #[[1]], "name" -> #[[2]]|> & /@
+     pages;
+  titles = 
+   StringCases[URLRead[#url, "Body", CharacterEncoding -> "UTF8"], 
+      "<a href=content_" ~~ id : DigitCharacter .. ~~ ".htm?div=-1" ~~
+         "><div style=\"display:inline\" id=mp" ~~ DigitCharacter .. ~~
+         ">" ~~ Shortest[title__] ~~ "</div></a>" :> {id, title}] & /@
+     pages;
+  titles = DeleteDuplicates[Flatten[titles, 1]];
+  titles = <|"title" -> #[[2]], 
+      "url" -> baseurl <> date <> "content_" <> #[[1]] <> ".htm"|> & /@
+     titles;
+  titles = SortBy[titles, #url &];
+  Button[If[StringContainsQ[#title, "汉寿"], 
+      Style[#title, Red, Bold], #title], CreateDialog[
+      text = URLRead[#url, "Body", CharacterEncoding -> "UTF8"];
+      Pane[
+       StringReplace[
+        First@StringCases[text, 
+          "<!--enpcontent-->" ~~ Shortest[content__] ~~ 
+            "<!--/enpcontent-->" :> content], {"&nbsp;" -> 
+          " ", {"<p>", "<P>"} -> "    ", {"</p>", "</P>"} -> "\n", 
+         "汉寿" -> ToString[Style["汉寿", Bold, Red], 
+           FormatType -> StandardForm]}], ImageSize -> {600, 500}, 
+       Scrollbars -> {False, True}]]
+     ] & /@ titles
+  ]
+常德日报文章爬取[date_] := Module[
+  {baseurl = "http://cdrb.cdyee.com/pc/column/", text, pages, titles},
+  text = URLRead[baseurl <> date <> "node_A01.html", "Body", 
+    CharacterEncoding -> "UTF8"];
+  pages = 
+   StringCases[text, 
+     "<a href=\"node_" ~~ Shortest[id__] ~~ ".html\"" :> id] // 
+    DeleteDuplicates;
+  pages = <|"url" -> baseurl <> date <> "node_" <> # <> ".html"|> & /@
+     pages;
+  titles = 
+   StringCases[URLRead[#url, "Body", CharacterEncoding -> "UTF8"], 
+      "<a href=\"../../../" ~~ Shortest[url__] ~~ "\"" ~~ 
+        Shortest[__] ~~ "<h4>" ~~ 
+        Shortest[title : Except[{"<", ">"}] ..] ~~ "</h4>" :> {url, 
+        title}] & /@ pages;
+  titles = DeleteDuplicates[Flatten[titles, 1]];
+  titles = <|"title" -> #[[2]], 
+      "url" -> "cdrb.cdyee.com/pc/" <> #[[1]]|> & /@ titles;
+  titles = SortBy[titles, #url &];
+  Button[If[StringContainsQ[#title, "汉寿"], 
+      Style[#title, Red, Bold], #title], CreateDialog[
+      text = URLRead[#url, "Body", CharacterEncoding -> "UTF8"];
+      Pane[
+       StringReplace[
+        First@StringCases[text, 
+          "<!--enpcontent-->" ~~ Shortest[content__] ~~ 
+            "<!--/enpcontent-->" :> content], {"&nbsp;" -> 
+          " ", {"<p>", "<P>"} -> "    ", {"</p>", "</P>"} -> "\n", 
+         "汉寿" -> ToString[Style["汉寿", Bold, Red], 
+           FormatType -> StandardForm]}], ImageSize -> {600, 500}, 
+       Scrollbars -> {False, True}]]
+     ] & /@ titles
+  ]
+常德晚报文章爬取[date_] := Module[
+  {baseurl = "http://cdwb.cdyee.com/pc/column/", text, pages, titles},
+  text = URLRead[baseurl <> date <> "node_A01.html", "Body", 
+    CharacterEncoding -> "UTF8"];
+  pages = 
+   StringCases[text, 
+     "<a href=\"node_" ~~ Shortest[id__] ~~ ".html\"" :> id] // 
+    DeleteDuplicates;
+  pages = <|"url" -> baseurl <> date <> "node_" <> # <> ".html"|> & /@
+     pages;
+  titles = 
+   StringCases[URLRead[#url, "Body", CharacterEncoding -> "UTF8"], 
+      "<a href=\"../../../" ~~ Shortest[url__] ~~ "\"" ~~ 
+        Shortest[__] ~~ "<h4>" ~~ 
+        Shortest[title : Except[{"<", ">"}] ..] ~~ "</h4>" :> {url, 
+        title}] & /@ pages;
+  titles = DeleteDuplicates[Flatten[titles, 1]];
+  titles = <|"title" -> #[[2]], 
+      "url" -> "cdwb.cdyee.com/pc/" <> #[[1]]|> & /@ titles;
+  titles = SortBy[titles, #url &];
+  Button[If[StringContainsQ[#title, "汉寿"], 
+      Style[#title, Red, Bold], #title], CreateDialog[
+      text = URLRead[#url, "Body", CharacterEncoding -> "UTF8"];
+      Pane[
+       StringReplace[
+        First@StringCases[text, 
+          "<!--enpcontent-->" ~~ Shortest[content__] ~~ 
+            "<!--/enpcontent-->" :> content], {"&nbsp;" -> 
+          " ", {"<p>", "<P>"} -> "    ", {"</p>", "</P>"} -> "\n", 
+         "汉寿" -> ToString[Style["汉寿", Bold, Red], 
+           FormatType -> StandardForm]}], ImageSize -> {600, 500}, 
+       Scrollbars -> {False, True}]]
+     ] & /@ titles
+  ]
+
+法制周报文章爬取[date_] := Module[
+  {baseurl = "https://epaper.voc.com.cn/fzzb/html/", text, pages, 
+   titles},
+  text = URLRead[baseurl <> date <> "node_1623.htm", "Body", 
+    CharacterEncoding -> "UTF8"];
+  pages = 
+   StringCases[text, 
+    "<a id=pageLink href=" ~~ {"./", ""} ~~ Shortest[addr__] ~~ ">" ~~
+       Shortest[name__] ~~ "</a>" :> {addr, name}];
+  pages = <|"url" -> baseurl <> date <> #[[1]], "name" -> #[[2]]|> & /@
+     pages;
+  titles = 
+   StringCases[URLRead[#url, "Body", CharacterEncoding -> "UTF8"], 
+      "<a href=content_" ~~ id : DigitCharacter .. ~~ ".htm?div=-1" ~~
+         "><div style=\"display:inline\" id=mp" ~~ DigitCharacter .. ~~
+         ">" ~~ Shortest[title__] ~~ "</div></a>" :> {id, title}] & /@
+     pages;
+  titles = DeleteDuplicates[Flatten[titles, 1]];
+  titles = <|"title" -> #[[2]], 
+      "url" -> baseurl <> date <> "content_" <> #[[1]] <> ".htm"|> & /@
+     titles;
+  titles = SortBy[titles, #url &];
+  Button[If[StringContainsQ[#title, "汉寿"], 
+      Style[#title, Red, Bold], #title], CreateDialog[
+      text = URLRead[#url, "Body", CharacterEncoding -> "UTF8"];
+      Pane[
+       StringReplace[
+        First@StringCases[text, 
+          "<!--enpcontent-->" ~~ Shortest[content__] ~~ 
+            "<!--/enpcontent-->" :> content], {"&nbsp;" -> 
+          " ", {"<p>", "<P>"} -> "    ", {"</p>", "</P>"} -> "\n", 
+         "汉寿" -> "【汉寿】"}], ImageSize -> {600, 500}, 
+       Scrollbars -> {False, True}]]
+     ] & /@ titles
+  ]
