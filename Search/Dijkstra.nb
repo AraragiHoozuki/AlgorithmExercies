@@ -1,0 +1,32 @@
+(*随机生成一个有向图图，并随机生成权重*)
+g = DirectedGraph[
+   RandomGraph[{7, 14}, VertexLabels -> Placed[Automatic, Center], 
+    VertexSize -> .2], "Random"];
+weights = RandomInteger[{1, 15}, EdgeCount@g];
+g = Annotate[g, EdgeWeight -> weights];
+g = Annotate[g, EdgeLabels -> "EdgeWeight"]
+
+(*初始化距离函数*)
+Clear[dist];
+(*初始化边权重*)
+MapThread[
+  Set, {Apply[Unevaluated@*dist] /@ List @@@ EdgeList[g], weights}];
+(*顶点与自己的距离为0*)dist[x_, x_] = 0;
+(*未计算的顶点距离为无穷大*)dist[x_, y_] := Infinity;
+
+(*确定起始顶点*)
+o = 1;
+(*待计算顶点之外的点为待计算点*)
+rest = Complement[VertexList[g], {o}];
+
+(*使用 Dijkstra 算法更新距离函数*)
+While[Length@rest > 0,
+ x = First@MinimalBy[rest, dist[o, #] &, 1];
+ rest = Complement[rest, {x}];
+ Table[If[dist[o, x] + dist[x, i] < dist[o, i], 
+   dist[o, i] = dist[o, x] + dist[x, i]], {i, rest}];
+ ]
+
+ (*验证计算结果的正确性*)
+Column@{IntegerPart /@ Rest@GraphDistance[g, o], 
+  dist[o, #] & /@ Complement[VertexList[g], {o}]}
