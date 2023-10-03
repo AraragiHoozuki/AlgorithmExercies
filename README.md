@@ -1,2 +1,2 @@
-# MathematicaToys
-Toys achieved with Mathematica
+# AlgorithmExercies
+AlgorithmExercies achieved with Mathematica
